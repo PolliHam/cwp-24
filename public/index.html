@@ -1,0 +1,110 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Lab24</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <style>
+        html, body {margin:0;padding:0;}
+        .main {
+            margin:0 auto; /* Центрируем блоки */
+            width:100%; /* Задаем ширину 100%, чтобы сделать ее резиновой */
+
+        }
+        .inline div {
+            display:inline-block; /* Делаем блоки по горизонтали */
+            display: -moz-inline-stack; /* Для FireFox 2, тот же самый, что и inline-block */
+            vertical-align:top; /* Выравниваем их сверху */
+            font-size:16px; /* Ставим дочкам размер шрифта, иначе примет значение родителя */
+            /* Для IE 6 и IE 7, чтобы блоки были по горизонтали
+            zoom: 1;
+            *display: inline;
+            */
+        }
+        div.inline {font-size:0;} /* Ставим родителю значение 0, чтобы убрать отступы у блоков*/
+        .blockchain {
+
+            width:40%; /*Задаем ширину в процентах чтобы сделать ее резиновой*/
+            height:300px; /* Высота блока */
+        }
+        .buy {
+
+            width:30%;
+            height:300px;
+        }
+        .sell {
+
+            width:30%;
+            height:300px;
+        }
+    </style>
+    <script type="text/javascript">
+        const socket = io();
+
+        $(function () {
+            $('form').submit(function(e) {
+                e.preventDefault(); // prevents page reloading
+                socket.emit('send', {
+                    currency: $('#currencyId').val(),
+                    timer: $('#timeoutId').val(),
+                });
+            });
+        });
+
+        socket.on('btc', data => {
+            $('#blockchainInfo').append($('<div>').text(`Buy: ${data.buy} | Sell: ${data.sell}`));
+        });
+
+        function roomOperation(operationType) {
+            const contentInput = $(`#${operationType}Content`);
+            let content = contentInput.val();
+            socket.emit('room', {
+                content: content,
+                room: `${operationType}`
+            });
+            contentInput.val('');
+        }
+
+        socket.on('room', data => {
+            const { room, content } = data;
+            if (room === 'buy') {
+                $('#buy').append($('<div>').text(content));
+            }
+            if (room === 'sell') {
+                $('#sell').append($('<div>').text(content));
+            }
+        })
+    </script>
+</head>
+<body>
+<div class="main inline">
+    <div class="blockchain">
+        <h1>Blockchain API:</h1>
+        <form>
+            <input type="text" class="form-control" id="currencyId" placeholder="Currency">
+            <input type="text" class="form-control" id="timeoutId" placeholder="Timeout">
+            <button type="submit" class="btn btn-info">Get info</button>
+        </form>
+        <div id='blockchainInfo' style="width: 200px"></div>
+    </div>
+    <div class="buy">
+        <h1>BUY:</h1>
+        <input type="text" class="form-control" id="buyContent"/>
+        <input type="button" class="btn btn-info" onclick="roomOperation('buy')" value="Buy"/><br/>
+        <div id="buy"></div>
+    </div>
+    <div class="sell">
+        <h1>SELL:</h1>
+        <input type="text" class="form-control" id="sellContent"/>
+        <input type="button" class="btn btn-info" onclick="roomOperation('sell')" value="Sell"/><br/>
+        <div id="sell"></div>
+    </div>
+</div>
+</body>
+</html>
